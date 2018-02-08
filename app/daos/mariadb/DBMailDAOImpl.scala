@@ -68,8 +68,7 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
   def all: Future[List[DBMail]] =
     db.run(mails.to[List].result)
 
-  def create(mail: Mail): Future[Long] = {
-    val dbMail = DBMail(mail)
+  def create(dbMail: DBMail): Future[Long] = {
     val interaction = for {
       m <- mails returning mails.map(_.id) += dbMail
       _ <- DBIO.sequence(mail.receiver.toList.map((r) => receiverDAO.insert(DBReceiver(r, m))))
