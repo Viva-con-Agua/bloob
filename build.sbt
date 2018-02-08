@@ -21,6 +21,11 @@ libraryDependencies += "net.codingwell" %% "scala-guice" % "4.1.1"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
 libraryDependencies += "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingVersion(scalaBinaryVersion.value) % Test
 libraryDependencies += "io.gatling" % "gatling-test-framework" % gatlingVersion(scalaBinaryVersion.value) % Test
+libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.45"
+libraryDependencies ++= Seq(
+  "com.typesafe.play" %% "play-slick" % "3.0.1",
+  "com.typesafe.play" %% "play-slick-evolutions" % "3.0.1"
+)
 
 // The Play project itself
 lazy val root = (project in file("."))
