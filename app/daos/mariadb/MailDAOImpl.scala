@@ -3,8 +3,6 @@ package mariadb
 import javax.inject.{Inject, Singleton}
 
 import play.api.db.slick.DatabaseConfigProvider
-import slick.dbio
-import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 
 import daos.MailDAO

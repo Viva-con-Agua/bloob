@@ -3,8 +3,6 @@ package mariadb
 import javax.inject.{Inject, Singleton}
 
 import play.api.db.slick.DatabaseConfigProvider
-import slick.dbio
-import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -73,17 +71,6 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
       m <- mails returning mails.map(_.id) += dbMail
       _ <- DBIO.sequence(receiver.toList.map((r) => receiverDAO.insert(DBReceiver(r, m))))
     } yield m
-//    db.run(mails returning mails.map(_.id) += dbMail)
     db.run(interaction.transactionally)
   }
-
-  private def addReceiver(mailId: Long, receiver: String): Future[Long] = {
-    val interaction = for {
-      Some(dbMail) <- _findById(mailId)
-      id <- receiverDAO.insert(DBReceiver(receiver, dbMail.id))
-    } yield id
-
-    db.run(interaction.transactionally)
-  }
-
 }
