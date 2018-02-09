@@ -8,9 +8,9 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 import models.Mail
 
-private[mariadb] case class DBMail(id: Long, authorEmail: String, subject: String, body: String)
-private[mariadb] object DBMail extends Function4[Long, String, String, String, DBMail] {
-  def apply(mail: Mail): DBMail = DBMail(0, mail.author, mail.subject, mail.body)
+private[mariadb] case class DBMail(id: Long, authorEmail: String, subject: String, body: String, metaSendingAddress: Option[String], metaCreated: Long, metaSent: Option[Long])
+private[mariadb] object DBMail extends Function7[Long, String, String, String, Option[String], Long, Option[Long], DBMail] {
+  def apply(mail: Mail): DBMail = DBMail(0, mail.author, mail.subject, mail.body, mail.meta.sendingAddress, mail.meta.created, mail.meta.sent)
 }
 
 @Singleton
@@ -41,6 +41,15 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
     /** The body column */
     def body = column[String]("body")
 
+    /** The meta_sending_address column */
+    def meta_sending_address = column[Option[String]]("meta_sending_address")
+
+    /** The meta_created column */
+    def meta_created = column[Long]("meta_created")
+
+    /** The meta_sent column */
+    def meta_sent = column[Option[Long]]("meta_sent")
+
     /**
       * This is the tables default "projection".
       *
@@ -49,7 +58,7 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
       * In this case, we are simply passing the id, name and page parameters to the Mail case classes
       * apply and unapply methods.
       */
-    def * = (id, author_email, subject, body) <> (DBMail.tupled, DBMail.unapply)
+    def * = (id, author_email, subject, body, meta_sending_address, meta_created, meta_sent) <> (DBMail.tupled, DBMail.unapply)
   }
 
   /**

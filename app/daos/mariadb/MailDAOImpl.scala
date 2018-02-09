@@ -8,7 +8,7 @@ import slick.jdbc.JdbcProfile
 import daos.MailDAO
 
 import scala.concurrent.{ExecutionContext, Future}
-import models.Mail
+import models.{Mail, MailMeta}
 
 @Singleton
 class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImpl)(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) extends MailDAO {
@@ -32,9 +32,10 @@ class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImp
     result.foldLeft[Map[Long, Mail]](Map())((list, mailReceiver) => {
       val mail = list.get(mailReceiver._1.id).map((mail) =>
         mail.copy(receiver = mail.receiver ++ Set(mailReceiver._2.userEmail))
-      ).getOrElse(
-        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, Set(mailReceiver._2.userEmail))
-      )
+      ).getOrElse({
+        val meta = MailMeta(mailReceiver._1.metaSendingAddress, mailReceiver._1.metaCreated, mailReceiver._1.metaSent)
+        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, Set(mailReceiver._2.userEmail), meta)
+      })
       (list - mailReceiver._1.id) + (mailReceiver._1.id -> mail)
     }).toList.map(_._2)
   )

@@ -19,11 +19,13 @@ class HomeController @Inject()(mailDAO: MailDAO, cc: ControllerComponents) exten
   }
 
   def daoTest = Action.async { implicit request => {
-    val mail = Mail("Johann", "Test Mail", "Dies ist eine Testmail!", Set("Dennis", "Jens"))
-    mailDAO.create(mail)
+    val mail1 = Mail("Johann", "Test Mail", "Dies ist eine Testmail!", Set("Dennis", "Jens"))
+    val mail2 = Mail("Dennis", "Tester Mail", "Dies ist noch eine Testmail!", Set("Johann", "Jens"), "no-reply@vivaconagua.org")
+    mailDAO.create(mail1)
+    mailDAO.create(mail2)
     val fromDB = mailDAO.all
     fromDB.map((mailList) => {
-      if(mailList.contains(mail)) {
+      if(mailList.contains(mail1) && mailList.contains(mail2)) {
         Ok("Mail found in database!")
       } else {
         Ok("Mail NOT found in database!")
