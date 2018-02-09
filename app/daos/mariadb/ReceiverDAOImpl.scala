@@ -25,7 +25,7 @@ class ReceiverDAOImpl @Inject() (dbConfigProvider: DatabaseConfigProvider)(impli
   import dbConfig._
   import profile.api._
 
-  private class ReceiverTable(tag: Tag) extends Table[DBReceiver](tag, "receiver") {
+  private[mariadb] class ReceiverTable(tag: Tag) extends Table[DBReceiver](tag, "receiver") {
 
     def id = column[Long]("id", O.AutoInc, O.PrimaryKey)
     def user_email = column[String]("user_email")
@@ -36,7 +36,7 @@ class ReceiverDAOImpl @Inject() (dbConfigProvider: DatabaseConfigProvider)(impli
 
   }
 
-  private val receiver = TableQuery[ReceiverTable]
+  private[mariadb] val receiver = TableQuery[ReceiverTable]
 
   def findById(id: Long): Future[DBReceiver] =
     db.run(receiver.filter(_.id === id).result.head)

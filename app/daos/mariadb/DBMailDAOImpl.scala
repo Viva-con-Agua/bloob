@@ -29,7 +29,7 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
   /**
     * Here we define the table. It will have a user, a subject, a body and a list of receiver
     */
-  private class MailTable(tag: Tag) extends Table[DBMail](tag, "mails") {
+  private[mariadb] class MailTable(tag: Tag) extends Table[DBMail](tag, "mails") {
 
     /** The ID column, which is the primary key, and auto incremented */
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -57,7 +57,7 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
   /**
     * The starting point for all queries on the mail table.
     */
-  private val mails = TableQuery[MailTable]
+  private[mariadb] val mails = TableQuery[MailTable]
 
   private def _findById(id: Long): DBIO[Option[DBMail]] =
     mails.filter(_.id === id).result.headOption
@@ -68,10 +68,10 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
   def all: Future[List[DBMail]] =
     db.run(mails.to[List].result)
 
-  def create(dbMail: DBMail): Future[Long] = {
+  def create(dbMail: DBMail, receiver: Set[String]): Future[Long] = {
     val interaction = for {
       m <- mails returning mails.map(_.id) += dbMail
-      _ <- DBIO.sequence(mail.receiver.toList.map((r) => receiverDAO.insert(DBReceiver(r, m))))
+      _ <- DBIO.sequence(receiver.toList.map((r) => receiverDAO.insert(DBReceiver(r, m))))
     } yield m
 //    db.run(mails returning mails.map(_.id) += dbMail)
     db.run(interaction.transactionally)

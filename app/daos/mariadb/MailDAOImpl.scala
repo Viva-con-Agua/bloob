@@ -2,20 +2,42 @@ package mariadb
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.db.slick.DatabaseConfigProvider
+import slick.dbio
+import slick.dbio.Effect.Read
+import slick.jdbc.JdbcProfile
+
 import daos.MailDAO
 
 import scala.concurrent.{ExecutionContext, Future}
 import models.Mail
 
 @Singleton
-class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImpl)(implicit ec: ExecutionContext) extends MailDAO {
+class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImpl)(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) extends MailDAO {
 
-  def create(mail: Mail) : Future[Long] = mailDBDAO.create(DBMail(mail))
+  // We want the JdbcProfile for this provider
+  val dbConfig = dbConfigProvider.get[JdbcProfile]
+  val db = dbConfig.db
 
-  def all : Future[List[Mail]] = mailDBDAO.all.flatMap((l) => Future.sequence(
-    l.map((m) => {
-      val dbReceiver = receiverDAO.findByMailId(m.id)
-      dbReceiver.map(list =>  Mail(m.authorEmail, m.subject, m.body, list.map(_.userEmail).toSet))
-    })
-  ))
+  // These imports are important, the first one brings db into scope, which will let you do the actual db operations.
+  // The second one brings the Slick DSL into scope, which lets you define the table and other queries.
+  import dbConfig._
+  import profile.api._
+
+  private def mailReceiverInnerJoin = for {
+    (m, r) <- mailDBDAO.mails join receiverDAO.receiver on(_.id === _.mail_id)
+  } yield (m, r)
+
+  def create(mail: Mail) : Future[Long] = mailDBDAO.create(DBMail(mail), mail.receiver)
+
+  def all : Future[List[Mail]] = db.run(mailReceiverInnerJoin.result).map( result =>
+    result.foldLeft[Map[Long, Mail]](Map())((list, mailReceiver) => {
+      val mail = list.get(mailReceiver._1.id).map((mail) =>
+        mail.copy(receiver = mail.receiver ++ Set(mailReceiver._2.userEmail))
+      ).getOrElse(
+        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, Set(mailReceiver._2.userEmail))
+      )
+      (list - mailReceiver._1.id) + (mailReceiver._1.id -> mail)
+    }).toList.map(_._2)
+  )
 }
