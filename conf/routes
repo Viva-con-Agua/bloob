@@ -2,7 +2,7 @@ GET        /                       controllers.HomeController.index
 GET        /dao                    controllers.HomeController.daoTest
 
 GET        /rest/v1/mail           v1.mails.MailsController.index
-POST       /rest/v1/mail           v1.mails.MailsController.process
+POST       /rest/v1/mail           v1.mails.MailsController.create
 GET        /rest/v1/mail/:id       v1.mails.MailsController.show(id)
 
 # Map static resources from the /public folder to the /assets URL path
