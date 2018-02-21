@@ -1,5 +1,8 @@
 package models
 
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 /**
   * Represents an e-mail.
   *
@@ -23,11 +26,34 @@ case class Mail(author: String, subject: String, body: String, receiver: Set[Str
 }
 
 object Mail {
+
+  //import models.MailMeta._
+
   def apply(author: String, subject: String, body: String, receiver: Set[String]) : Mail =
     Mail(author, subject, body, receiver, MailMeta(None, System.currentTimeMillis(), None))
 
   def apply(author: String, subject: String, body: String, receiver: Set[String], sendingAddress : String) : Mail =
     Mail(author, subject, body, receiver, MailMeta(Some(sendingAddress), System.currentTimeMillis(), None))
+
+  def apply(author: String, subject: String, body: String, receiver: Set[String], sendingAddress : String, created: Long, sending: Boolean) : Mail =
+    Mail(author, subject, body, receiver, MailMeta(Some(sendingAddress), created, (if (sending)  Some(System.currentTimeMillis()) else None)))
+
+  implicit val mailWrites: Writes[Mail] = (
+    (JsPath \ "author").write[String] and
+      (JsPath \ "subject").write[String] and
+      (JsPath \ "body").write[String] and
+      (JsPath \ "receiver").write[Set[String]] and
+      (JsPath \ "meta").write[MailMeta]
+    )(unlift(Mail.unapply))
+
+  implicit val mailReads: Reads[Mail] = (
+    (JsPath \ "author").read[String] and
+      (JsPath \ "subject").read[String] and
+      (JsPath \ "body").read[String] and
+      (JsPath \ "receiver").read[Set[String]] and
+      (JsPath \ "meta").read[MailMeta]
+    )((author, subject, body, receiver, meta) => Mail(author, subject, body, receiver, meta))
+
 }
 
 /**
@@ -41,3 +67,18 @@ object Mail {
   * @param sent date of the sending the e-mail.
   */
 case class MailMeta(sendingAddress: Option[String], created: Long, sent: Option[Long])
+
+object MailMeta {
+
+  implicit val mailMetaWrites: Writes[MailMeta] = (
+    (JsPath \ "sendingAddress").writeNullable[String] and
+      (JsPath \ "created").write[Long] and
+      (JsPath \ "sent").writeNullable[Long]
+    )(unlift(MailMeta.unapply))
+
+  implicit val mailMetaReads: Reads[MailMeta] = (
+    (JsPath \ "sendingAddress").readNullable[String] and
+      (JsPath \ "created").read[Long] and
+      (JsPath \ "sent").readNullable[Long]
+    )(MailMeta.apply _)
+}

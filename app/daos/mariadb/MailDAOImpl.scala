@@ -22,21 +22,33 @@ class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImp
   import dbConfig._
   import profile.api._
 
-  private def mailReceiverInnerJoin = for {
-    (m, r) <- mailDBDAO.mails join receiverDAO.receiver on(_.id === _.mail_id)
+  private def mailReceiver(idOpt: Option[Long]) = for {
+    (m, r) <- mailDBDAO.mails.filter(m =>
+      idOpt.map(id => m.id === id).getOrElse(slick.lifted.LiteralColumn(true))
+    ) joinLeft receiverDAO.receiver on(_.id === _.mail_id)
   } yield (m, r)
 
-  def create(mail: Mail) : Future[Long] = mailDBDAO.create(DBMail(mail), mail.receiver)
-
-  def all : Future[List[Mail]] = db.run(mailReceiverInnerJoin.result).map( result =>
+  private def resultMapper(result: Seq[(DBMail, Option[DBReceiver])]) : List[Mail] =
     result.foldLeft[Map[Long, Mail]](Map())((list, mailReceiver) => {
       val mail = list.get(mailReceiver._1.id).map((mail) =>
-        mail.copy(receiver = mail.receiver ++ Set(mailReceiver._2.userEmail))
+        mail.copy(receiver = mail.receiver ++ mailReceiver._2.map(dbReceiver => Set(dbReceiver.userEmail)).getOrElse(Set()))
       ).getOrElse({
         val meta = MailMeta(mailReceiver._1.metaSendingAddress, mailReceiver._1.metaCreated, mailReceiver._1.metaSent)
-        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, Set(mailReceiver._2.userEmail), meta)
+        val receiver = mailReceiver._2.map(dbReceiver => Set(dbReceiver.userEmail)).getOrElse(Set())
+        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, receiver, meta)
       })
       (list - mailReceiver._1.id) + (mailReceiver._1.id -> mail)
     }).toList.map(_._2)
-  )
+
+  def create(mail: Mail) : Future[Long] = mailDBDAO.create(DBMail(mail), mail.receiver)
+
+  def all : Future[List[Mail]] =
+    db.run(mailReceiver(None).result).map( result =>
+      resultMapper(result)
+    )
+
+  def lookup(id: String) : Future[Option[Mail]] =
+    db.run(mailReceiver(Some(id.toLong)).result).map( result =>
+      resultMapper(result).headOption
+    )
 }
