@@ -5,10 +5,14 @@ import javax.inject.Inject
 import play.api.Logger
 import play.api.data.Form
 //import play.api.libs.json.Json
-import play.api.libs.json.{Json, JsError}
+import play.api.libs.json.{Json, JsError, JsValue}
+import play.api.libs.streams.ActorFlow
 //import play.api.libs.json.Reads._
 //import play.api.libs.functional.syntax._
 import play.api.mvc._
+
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,7 +22,7 @@ import daos.MailDAO
 /**
   * Takes HTTP requests and produces JSON.
   */
-class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(implicit ec: ExecutionContext)
+class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer)
     extends WSBaseController(cc) {
 
   private val logger = Logger(getClass)
@@ -51,5 +55,11 @@ class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(im
         }
       }
     )
+  }
+
+  def createWS = WebSocket.accept[JsValue, JsValue] { request =>
+    ActorFlow.actorRef { out =>
+      MailWebSocketActor.props(out, mailDAO)
+    }
   }
 }
