@@ -19,8 +19,8 @@ class HomeController @Inject()(mailDAO: MailDAO, cc: ControllerComponents) exten
   }
 
   def daoTest = Action.async { implicit request => {
-    val mail1 = Mail("Johann", "Test Mail", "Dies ist eine Testmail!", Set("Dennis", "Jens"))
-    val mail2 = Mail("Dennis", "Tester Mail", "Dies ist noch eine Testmail!", Set("Johann", "Jens"), "no-reply@vivaconagua.org")
+    val mail1 = Mail(1, "Johann", "Test Mail", "Dies ist eine Testmail!", Set("Dennis", "Jens"))
+    val mail2 = Mail(2, "Dennis", "Tester Mail", "Dies ist noch eine Testmail!", Set("Johann", "Jens"), "no-reply@vivaconagua.org")
     mailDAO.create(mail1)
     mailDAO.create(mail2)
     val fromDB = mailDAO.all

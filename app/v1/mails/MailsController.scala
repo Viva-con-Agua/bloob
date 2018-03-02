@@ -3,7 +3,7 @@ package v1.mails
 import javax.inject.Inject
 
 import play.api.Logger
-import play.api.data.Form
+//import play.api.data.Form
 //import play.api.libs.json.Json
 import play.api.libs.json.{Json, JsError, JsValue}
 import play.api.libs.streams.ActorFlow
@@ -16,13 +16,15 @@ import akka.stream.Materializer
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import models.Mail
+import models.MailStub
 import daos.MailDAO
+import sockets._
+import utils.MailerService
 
 /**
   * Takes HTTP requests and produces JSON.
   */
-class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer)
+class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO, mailer: MailerService)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer)
     extends WSBaseController(cc) {
 
   private val logger = Logger(getClass)
@@ -44,7 +46,7 @@ class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(im
 
   def create = WSAction(parse.json).async { implicit request =>
     logger.trace("create: json = " + request.body)
-    val mailForm = request.body.validate[Mail]
+    val mailForm = request.body.validate[MailStub]
     mailForm.fold(
       errors => {
         Future.successful(BadRequest(Json.obj("status" ->"Error", "message" -> JsError.toJson(errors))))
@@ -59,7 +61,19 @@ class MailsController @Inject()(cc: WSControllerComponents, mailDAO: MailDAO)(im
 
   def createWS = WebSocket.accept[JsValue, JsValue] { request =>
     ActorFlow.actorRef { out =>
-      MailWebSocketActor.props(out, mailDAO)
+      MailCreateActor.props(out, mailDAO)
+    }
+  }
+
+  def sendWS = WebSocket.accept[JsValue, JsValue] { request =>
+    ActorFlow.actorRef { out =>
+      MailSendActor.props(out, mailer)
+    }
+  }
+
+  def createAndSendWS = WebSocket.accept[JsValue, JsValue] { request =>
+    ActorFlow.actorRef { out =>
+      MailCreateAndSendActor.props(out, mailDAO, mailer)
     }
   }
 }

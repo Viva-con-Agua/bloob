@@ -8,7 +8,7 @@ import slick.jdbc.JdbcProfile
 import daos.MailDAO
 
 import scala.concurrent.{ExecutionContext, Future}
-import models.{Mail, MailMeta}
+import models.{Mail, MailMeta, MailStub}
 
 @Singleton
 class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImpl)(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) extends MailDAO {
@@ -35,12 +35,13 @@ class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImp
       ).getOrElse({
         val meta = MailMeta(mailReceiver._1.metaSendingAddress, mailReceiver._1.metaCreated, mailReceiver._1.metaSent)
         val receiver = mailReceiver._2.map(dbReceiver => Set(dbReceiver.userEmail)).getOrElse(Set())
-        Mail(mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, receiver, meta)
+        Mail(mailReceiver._1.id, mailReceiver._1.authorEmail, mailReceiver._1.subject, mailReceiver._1.body, receiver, meta)
       })
       (list - mailReceiver._1.id) + (mailReceiver._1.id -> mail)
     }).toList.map(_._2)
 
   def create(mail: Mail) : Future[Long] = mailDBDAO.create(DBMail(mail), mail.receiver)
+  def create(mail: MailStub) : Future[Long] = mailDBDAO.create(DBMail(mail), mail.receiver)
 
   def all : Future[List[Mail]] =
     db.run(mailReceiver(None).result).map( result =>
@@ -51,4 +52,25 @@ class MailDAOImpl @Inject()(mailDBDAO: DBMailDAOImpl,receiverDAO: ReceiverDAOImp
     db.run(mailReceiver(Some(id.toLong)).result).map( result =>
       resultMapper(result).headOption
     )
-}
+
+  def lookup(id: Long) : Future[Option[Mail]] =
+    db.run(mailReceiver(Some(id)).result).map( result =>
+      resultMapper(result).headOption
+    )
+
+  /**
+    * Updates the referenced mail object and returns the new object if the update was successful.
+    *
+    * @author Johann Sell
+    * @param id Long references the Mail
+    * @return the updated mail
+    */
+  def send(id: Long) : Future[Option[Mail]] =
+    mailDBDAO.send(id).flatMap(_ match {
+      case Some(updatedId) =>
+        db.run(mailReceiver(Some(updatedId)).result).map( result =>
+          resultMapper(result).headOption
+        )
+      case None => Future.successful(None)
+    })
+ }

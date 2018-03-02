@@ -26,6 +26,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % "3.0.1",
   "com.typesafe.play" %% "play-slick-evolutions" % "3.0.1"
 )
+libraryDependencies += "com.typesafe.play" %% "play-mailer" % "6.0.1"
+libraryDependencies += "com.typesafe.play" %% "play-mailer-guice" % "6.0.1"
+libraryDependencies += "org.jsoup" % "jsoup" % "1.11.2"
 
 // The Play project itself
 lazy val root = (project in file("."))

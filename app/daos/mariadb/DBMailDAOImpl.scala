@@ -6,11 +6,12 @@ import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, Future}
-import models.Mail
+import models.{Mail, MailStub}
 
 private[mariadb] case class DBMail(id: Long, authorEmail: String, subject: String, body: String, metaSendingAddress: Option[String], metaCreated: Long, metaSent: Option[Long])
 private[mariadb] object DBMail extends Function7[Long, String, String, String, Option[String], Long, Option[Long], DBMail] {
-  def apply(mail: Mail): DBMail = DBMail(0, mail.author, mail.subject, mail.body, mail.meta.sendingAddress, mail.meta.created, mail.meta.sent)
+  def apply(mail: Mail): DBMail = DBMail(mail.id, mail.author, mail.subject, mail.body, mail.meta.sendingAddress, mail.meta.created, mail.meta.sent)
+  def apply(mail: MailStub) : DBMail = DBMail(0, mail.author, mail.subject, mail.body, mail.meta.sendingAddress, mail.meta.created, mail.meta.sent)
 }
 
 @Singleton
@@ -82,4 +83,20 @@ class DBMailDAOImpl @Inject()(receiverDAO: ReceiverDAOImpl)(dbConfigProvider: Da
     } yield m
     db.run(interaction.transactionally)
   }
+
+  /**
+    * Set the mails meta attribute sent to the current time.
+    *
+    * @author Johann Sell
+    * @param id Long references the mail
+    * @return the reference id to the updated mail object
+    */
+  def send(id: Long) : Future[Option[Long]] = db.run {
+    val q = for { m <- mails if m.id === id } yield m.meta_sent
+    q.update(Some(System.currentTimeMillis())).map {
+      case 0 => None
+      case _ => Some(id)
+    }
+  }
+
 }
