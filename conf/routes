@@ -1,7 +1,12 @@
 GET        /                       controllers.HomeController.index
+GET        /dao                    controllers.HomeController.daoTest
 
-->         /v1/posts               v1.post.PostRouter
+GET        /rest/v1/mail           v1.mails.MailsController.index
+POST       /rest/v1/mail           v1.mails.MailsController.create
+GET        /rest/v1/mail/:id       v1.mails.MailsController.show(id)
+GET        /ws/v1/mail/create      v1.mails.MailsController.createWS
+GET        /ws/v1/mail/send        v1.mails.MailsController.sendWS
+GET        /ws/v1/mail/createSend  v1.mails.MailsController.createAndSendWS
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file        controllers.Assets.at(path="/public", file)
-
