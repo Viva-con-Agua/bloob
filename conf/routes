@@ -1,6 +1,9 @@
 GET        /                       controllers.HomeController.index
 GET        /dao                    controllers.HomeController.daoTest
 
+GET        /authenticate/:provider controllers.LoginController.authenticate(provider)
+POST       /authenticate/:provider controllers.LoginController.authenticate(provider)
+
 GET        /rest/v1/mail           v1.mails.MailsController.index
 POST       /rest/v1/mail           v1.mails.MailsController.create
 GET        /rest/v1/mail/:id       v1.mails.MailsController.show(id)

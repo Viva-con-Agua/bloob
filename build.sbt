@@ -5,13 +5,19 @@ lazy val GatlingTest = config("gatling") extend Test
 scalaVersion in ThisBuild := "2.12.4"
 
 crossScalaVersions := Seq("2.11.12", "2.12.4")
+val silhouetteVersion = "5.0.2"
 
 def gatlingVersion(scalaBinVer: String): String = scalaBinVer match {
   case "2.11" => "2.2.5"
   case "2.12" => "2.3.0"
 }
 
+resolvers += "Atlassian Releases" at "https://maven.atlassian.com/public/"
+resolvers += "MVN Repository" at "https://mvnrepository.com/artifact/"
+
+libraryDependencies += ws
 libraryDependencies += guice
+libraryDependencies += ehcache
 libraryDependencies += "org.joda" % "joda-convert" % "1.9.2"
 libraryDependencies += "net.logstash.logback" % "logstash-logback-encoder" % "4.11"
 
@@ -29,7 +35,16 @@ libraryDependencies ++= Seq(
 libraryDependencies += "com.typesafe.play" %% "play-mailer" % "6.0.1"
 libraryDependencies += "com.typesafe.play" %% "play-mailer-guice" % "6.0.1"
 libraryDependencies += "org.jsoup" % "jsoup" % "1.11.2"
+libraryDependencies += "com.atlassian.jwt" % "jwt-core" % "1.6.1"
+libraryDependencies += "com.atlassian.jwt" % "jwt-api" % "1.6.1"
 
+libraryDependencies ++= Seq(
+  "com.mohiva" %% "play-silhouette" % silhouetteVersion,
+  "com.mohiva" %% "play-silhouette-password-bcrypt" % silhouetteVersion,
+  "com.mohiva" %% "play-silhouette-crypto-jca" % silhouetteVersion,
+  "com.mohiva" %% "play-silhouette-persistence" % silhouetteVersion
+)
+libraryDependencies += "com.iheart" %% "ficus" % "1.4.3"
 // The Play project itself
 lazy val root = (project in file("."))
   .enablePlugins(Common, PlayScala, GatlingPlugin)
