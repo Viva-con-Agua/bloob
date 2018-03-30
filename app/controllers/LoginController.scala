@@ -10,7 +10,7 @@ import utils.UserService
 import models.AccessToken
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import utils.auth.SessionEnv
+import utils.auth.CookieEnv
 import utils.auth.DropsSocialProfileBuilder
 
 import scala.concurrent.Future
@@ -28,7 +28,7 @@ class LoginController @Inject()(
                                  ws: WSClient,
                                  conf : Configuration,
                                  cc: ControllerComponents,
-                                 silhouette: Silhouette[SessionEnv],
+                                 silhouette: Silhouette[CookieEnv],
                                  userService: UserService,
                                  authInfoRepository: AuthInfoRepository,
                                  socialProviderRegistry: SocialProviderRegistry,
@@ -63,7 +63,8 @@ class LoginController @Inject()(
                 result
               }
               case _ => {
-                logger.error("Unexpected provider error", new ProviderException(s"Found no user for given LoginInfo key $profile.loginInfo.providerKey"))
+                val key = profile.loginInfo.providerKey
+                logger.error("Unexpected provider error", new ProviderException(s"Found no user for given LoginInfo key $key"))
                 Redirect(dropsLogin).flashing("error" -> Messages("could.not.authenticate"))
               }
             }
@@ -76,37 +77,37 @@ class LoginController @Inject()(
     })
   }
 
-  def login = Action {
-    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.code").get +
-      conf.getString("drops.client_id").get
-    Redirect(url)
-  }
-
-  def receiveCode(code: String) = Action.async {
-    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.accessToken").get
-    val clientId = conf.getString("drops.client_id").get
-    val clientSecret = conf.getString("drops.client_secret").get
-
-    val accessToken = ws.url(url).withQueryString(
-      "grant_type" -> "authorization_code",
-      "client_id" -> clientId,
-      "client_secret" -> clientSecret,
-      "code" -> code,
-      "redirect_uri" -> "http://localhost:8080/endpoint?code="
-    ).get().map(response => response.status match {
-      case 200 => AccessToken(response.json)
-      case _ => println(response.status); throw new Exception // Todo: throw meaningful exception considering the returned error message and status code!
-    })
-
-    accessToken.flatMap(token => {
-      val url = conf.getString("drops.url.base").get + conf.getString("drops.url.profile").get
-
-      ws.url(url).withQueryString(
-        "access_token" -> token.content
-      ).get().map(response => response.status match {
-        case 200 => Ok(Json.obj("status" -> "success", "code" -> code, "token" -> token.content, "user" -> response.json))
-        case _ => Ok(Json.obj("status" -> "error", "code" -> code, "token" -> token.content, "response-status" -> response.status))
-      })
-    })
-  }
+//  def login = Action {
+//    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.code").get +
+//      conf.getString("drops.client_id").get
+//    Redirect(url)
+//  }
+//
+//  def receiveCode(code: String) = Action.async {
+//    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.accessToken").get
+//    val clientId = conf.getString("drops.client_id").get
+//    val clientSecret = conf.getString("drops.client_secret").get
+//
+//    val accessToken = ws.url(url).withQueryString(
+//      "grant_type" -> "authorization_code",
+//      "client_id" -> clientId,
+//      "client_secret" -> clientSecret,
+//      "code" -> code,
+//      "redirect_uri" -> "http://localhost:8080/endpoint?code="
+//    ).get().map(response => response.status match {
+//      case 200 => AccessToken(response.json)
+//      case _ => println(response.status); throw new Exception // Todo: throw meaningful exception considering the returned error message and status code!
+//    })
+//
+//    accessToken.flatMap(token => {
+//      val url = conf.getString("drops.url.base").get + conf.getString("drops.url.profile").get
+//
+//      ws.url(url).withQueryString(
+//        "access_token" -> token.content
+//      ).get().map(response => response.status match {
+//        case 200 => Ok(Json.obj("status" -> "success", "code" -> code, "token" -> token.content, "user" -> response.json))
+//        case _ => Ok(Json.obj("status" -> "error", "code" -> code, "token" -> token.content, "response-status" -> response.status))
+//      })
+//    })
+//  }
 }

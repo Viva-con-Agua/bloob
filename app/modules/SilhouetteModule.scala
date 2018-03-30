@@ -33,7 +33,7 @@ import play.api.mvc._
 import play.api.Configuration
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.ws.WSClient
-import utils.auth.{DropsProvider,SessionEnv,CustomUnsecuredErrorHandler,CustomSecuredErrorHandler}
+import utils.auth.{DropsProvider,CookieEnv,SessionEnv,CustomUnsecuredErrorHandler,CustomSecuredErrorHandler}
 import utils.UserService
 
 /**
@@ -47,7 +47,8 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
   def configure() {
 //    bind[UserService].to[UserServiceImpl]
 //    bind[UserDAO].to[UserDAOImpl]
-    bind[Silhouette[SessionEnv]].to[SilhouetteProvider[SessionEnv]]
+//    bind[Silhouette[SessionEnv]].to[SilhouetteProvider[SessionEnv]]
+    bind[Silhouette[CookieEnv]].to[SilhouetteProvider[CookieEnv]]
     bind[UnsecuredErrorHandler].to[CustomUnsecuredErrorHandler]
     bind[SecuredErrorHandler].to[CustomSecuredErrorHandler]
     bind[CacheLayer].to[PlayCacheLayer]
@@ -82,13 +83,35 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     * @param eventBus The event bus instance.
     * @return The Silhouette environment.
     */
+//  @Provides
+//  def provideEnvironment(
+//                          userService: UserService,
+//                          authenticatorService: AuthenticatorService[SessionAuthenticator],
+//                          eventBus: EventBus): Environment[SessionEnv] = {
+//
+//    Environment[SessionEnv](
+//      userService,
+//      authenticatorService,
+//      Seq(),
+//      eventBus
+//    )
+//  }
+
+  /**
+    * Provides the Silhouette environment.
+    *
+    * @param userService The user service implementation.
+    * @param authenticatorService The authentication service implementation.
+    * @param eventBus The event bus instance.
+    * @return The Silhouette environment.
+    */
   @Provides
   def provideEnvironment(
                           userService: UserService,
-                          authenticatorService: AuthenticatorService[SessionAuthenticator],
-                          eventBus: EventBus): Environment[SessionEnv] = {
+                          authenticatorService: AuthenticatorService[CookieAuthenticator],
+                          eventBus: EventBus): Environment[CookieEnv] = {
 
-    Environment[SessionEnv](
+    Environment[CookieEnv](
       userService,
       authenticatorService,
       Seq(),
@@ -147,6 +170,31 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
 
     new JcaCrypter(config)
   }
+  /**
+    * Provides the signer for the authenticator.
+    *
+    * @param configuration The Play configuration.
+    * @return The signer for the authenticator.
+    */
+  @Provides @Named("authenticator-signer")
+  def provideAuthenticatorSigner(configuration: Configuration): Signer = {
+    val config = configuration.underlying.as[JcaSignerSettings]("silhouette.authenticator.signer")
+
+    new JcaSigner(config)
+  }
+
+  /**
+    * Provides the crypter for the authenticator.
+    *
+    * @param configuration The Play configuration.
+    * @return The crypter for the authenticator.
+    */
+  @Provides @Named("authenticator-crypter")
+  def provideAuthenticatorCrypter(configuration: Configuration): Crypter = {
+    val config = configuration.underlying.as[JcaCrypterSettings]("silhouette.authenticator.crypter")
+
+    new JcaCrypter(config)
+  }
 
   /**
     * Provides the signer for the CSRF state item handler.
@@ -172,32 +220,6 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     val config = configuration.underlying.as[JcaSignerSettings]("silhouette.socialStateHandler.signer")
 
     new JcaSigner(config)
-  }
-
-  /**
-    * Provides the signer for the authenticator.
-    *
-    * @param configuration The Play configuration.
-    * @return The signer for the authenticator.
-    */
-  @Provides @Named("authenticator-signer")
-  def provideAuthenticatorSigner(configuration: Configuration): Signer = {
-    val config = configuration.underlying.as[JcaSignerSettings]("silhouette.authenticator.signer")
-
-    new JcaSigner(config)
-  }
-
-  /**
-    * Provides the crypter for the authenticator.
-    *
-    * @param configuration The Play configuration.
-    * @return The crypter for the authenticator.
-    */
-  @Provides @Named("authenticator-crypter")
-  def provideAuthenticatorCrypter(configuration: Configuration): Crypter = {
-    val config = configuration.underlying.as[JcaCrypterSettings]("silhouette.authenticator.crypter")
-
-    new JcaCrypter(config)
   }
 
   /**
@@ -243,6 +265,36 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     val encoder = new CrypterAuthenticatorEncoder(crypter)
 
     new SessionAuthenticatorService(config, fingerprintGenerator, encoder, sessionCookieBaker, clock)
+  }
+
+
+
+  /**
+    * Provides the authenticator service.
+    *
+    * @param signer The signer implementation.
+    * @param crypter The crypter implementation.
+    * @param cookieHeaderEncoding Logic for encoding and decoding `Cookie` and `Set-Cookie` headers.
+    * @param fingerprintGenerator The fingerprint generator implementation.
+    * @param idGenerator The ID generator implementation.
+    * @param configuration The Play configuration.
+    * @param clock The clock instance.
+    * @return The authenticator service.
+    */
+  @Provides
+  def provideAuthenticatorService(
+                                   @Named("authenticator-signer") signer: Signer,
+                                   @Named("authenticator-crypter") crypter: Crypter,
+                                   cookieHeaderEncoding: CookieHeaderEncoding,
+                                   fingerprintGenerator: FingerprintGenerator,
+                                   idGenerator: IDGenerator,
+                                   configuration: Configuration,
+                                   clock: Clock): AuthenticatorService[CookieAuthenticator] = {
+
+    val config = configuration.underlying.as[CookieAuthenticatorSettings]("silhouette.authenticator")
+    val authenticatorEncoder = new CrypterAuthenticatorEncoder(crypter)
+
+    new CookieAuthenticatorService(config, None, signer, cookieHeaderEncoding, authenticatorEncoder, fingerprintGenerator, idGenerator, clock)
   }
 
 

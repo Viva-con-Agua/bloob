@@ -3,16 +3,26 @@ package controllers
 import javax.inject.Inject
 
 import play.api.mvc._
+import com.mohiva.play.silhouette.api.Silhouette
+import com.mohiva.play.silhouette.api.actions.SecuredAction
+import utils.auth.CookieEnv
+import utils.UserService
 
 import daos.MailDAO
 import models.Mail
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * A very small controller that renders a home page.
   */
-class HomeController @Inject()(mailDAO: MailDAO, cc: ControllerComponents) extends AbstractController(cc) {
+class HomeController @Inject()(
+                                mailDAO: MailDAO,
+                                cc: ControllerComponents,
+                                silhouette: Silhouette[CookieEnv],
+                                userService: UserService
+) extends AbstractController(cc) {
 
   def index = Action { implicit request =>
     Ok(views.html.index())
@@ -32,4 +42,8 @@ class HomeController @Inject()(mailDAO: MailDAO, cc: ControllerComponents) exten
       }
     })
   }}
+
+  def userTest = silhouette.SecuredAction.async { implicit request =>
+    Future.successful(Ok("User: " + request.identity))
+  }
 }

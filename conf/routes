@@ -1,5 +1,6 @@
 GET        /                       controllers.HomeController.index
 GET        /dao                    controllers.HomeController.daoTest
+GET        /user/test              controllers.HomeController.userTest
 
 GET        /authenticate/:provider controllers.LoginController.authenticate(provider)
 POST       /authenticate/:provider controllers.LoginController.authenticate(provider)
