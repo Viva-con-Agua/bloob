@@ -33,7 +33,7 @@ import play.api.mvc._
 import play.api.Configuration
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.ws.WSClient
-import utils.auth.{DropsProvider,CookieEnv,SessionEnv,CustomUnsecuredErrorHandler,CustomSecuredErrorHandler}
+import utils.auth.{DropsProvider,CookieEnv,SessionEnv,DropsSecuredErrorHandler,CustomUnsecuredErrorHandler,CustomSecuredErrorHandler}
 import utils.UserService
 
 /**
@@ -50,7 +50,7 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
 //    bind[Silhouette[SessionEnv]].to[SilhouetteProvider[SessionEnv]]
     bind[Silhouette[CookieEnv]].to[SilhouetteProvider[CookieEnv]]
     bind[UnsecuredErrorHandler].to[CustomUnsecuredErrorHandler]
-    bind[SecuredErrorHandler].to[CustomSecuredErrorHandler]
+    bind[SecuredErrorHandler].to[DropsSecuredErrorHandler]
     bind[CacheLayer].to[PlayCacheLayer]
 //    bind[OAuth2StateProvider].to[DummyStateProvider]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
