@@ -17,7 +17,8 @@ class DropsSecuredErrorHandler @Inject()(val messagesApi: MessagesApi)
     with Rendering {
 
   val refererHeader = "Referer"
-  val redirectToDrops = controllers.routes.LoginController.authenticate("drops")
+  private def redirectToDrops(request : RequestHeader) =
+    controllers.routes.LoginController.authenticate("drops", Some(request.uri))
 
   /**
     * Called when a user is not authenticated.
@@ -30,7 +31,7 @@ class DropsSecuredErrorHandler @Inject()(val messagesApi: MessagesApi)
     * @return The result to send to the client.
     */
   override def onNotAuthenticated(implicit request: RequestHeader) = {
-    Future.successful(Redirect(redirectToDrops))
+    Future.successful(Redirect(redirectToDrops(request)))
   }
 
   /**

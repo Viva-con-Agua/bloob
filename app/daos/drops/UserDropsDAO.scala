@@ -24,14 +24,7 @@ class UserDropsDAO @Inject() (ws: WSClient, conf : Configuration) extends UserDA
   val dropsClientSecret = conf.getString("drops.client_secret").get
 
   override def findByUUID(uuid: UUID) : Future[Option[User]] = {
-    logger.error(restEndpoint + uuid)
-    logger.error(restMethod)
-//    val url = ws.url(restEndpoint + uuid)
-//      .addQueryParameter("client_id", dropsClientId)
-//      .addQueryParameter("client_secret", dropsClientSecret)
     val url = ws.url(restEndpoint + uuid + "?client_id=" + dropsClientId + "&client_secret=" + dropsClientSecret)
-//      .addQueryParameter("client_id", dropsClientId)
-//      .addQueryParameter("client_secret", dropsClientSecret)
     restMethod match {
       case "GET" => url.get().map(response => response.status match {
         case 200 => Some(toUser(response.json))
