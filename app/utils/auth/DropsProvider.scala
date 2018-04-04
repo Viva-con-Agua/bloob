@@ -150,5 +150,5 @@ object DropsProvider {
     * The Drops constants.
     */
   val ID = "drops" // TODO: Read from config!
-  val API = "http://localhost:9100/oauth2/rest/profile?access_token=%s" // TODO: Change and read from config!
+  val API = "https://pool.vivaconagua.org/drops/oauth2/rest/profile?access_token=%s" // TODO: Change and read from config!
 }
