@@ -3,12 +3,13 @@ package controllers
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.{Silhouette,LoginEvent}
-import com.mohiva.play.silhouette.api.exceptions.ProviderException
+import com.mohiva.play.silhouette.api.exceptions.{ProviderException,AuthenticatorException,CryptoException}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.impl.providers._
 import com.mohiva.play.silhouette.impl.providers.state._
 import com.mohiva.play.silhouette.impl.exceptions._
 import utils.UserService
+import daos.drops.{UserDAOHTTPMethodException,UserDAONetworkException}
 import models.AccessToken
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -87,6 +88,14 @@ class LoginController @Inject()(
           case e: CryptoException => {
             logger.error("AuthenticatorException", e)
             Redirect(dropsLogin).flashing("error" -> Messages("silhouette.error." + e.getClass.getSimpleName))
+          }
+          case e: UserDAONetworkException => {
+            logger.error("UserDAOException", e)
+            Redirect(dropsLogin).flashing("error" -> Messages("drops.dao.error.network"))
+          }
+          case e: UserDAOHTTPMethodException => {
+            logger.error("UserDAOException", e)
+            Redirect(dropsLogin).flashing("error" -> Messages("drops.dao.error.method"))
           }
         }
       }

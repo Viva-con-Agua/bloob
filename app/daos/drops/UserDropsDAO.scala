@@ -1,4 +1,4 @@
-package drops
+package daos.drops
 
 import java.util.UUID
 import javax.inject.Inject
@@ -28,17 +28,21 @@ class UserDropsDAO @Inject() (ws: WSClient, conf : Configuration) extends UserDA
     restMethod match {
       case "GET" => url.get().map(response => response.status match {
         case 200 => Some(toUser(response.json))
-        case _ => logger.error("Requesting user and got response status: " + response.status); None // Todo: throw meaningful exception considering the returned error message and status code!
+        case 404 => {
+          logger.info("Requested user " + uuid + " not found!")
+          None
+        }
+        case _ => throw UserDAONetworkException(response.json)
       })
       case "POST" => url.addHttpHeaders("Content-Type" -> "application/json", "Accept" -> "application/json").post(Json.obj()).map(response => response.status match {
         case 200 => Some(toUser(response.json))
-        case _ => {
-          logger.error("Requesting user and got response status: " + response.status)
-          logger.error((response.json \ "error").as[String])
-          None // Todo: throw meaningful exception considering the returned error message and status code!
+        case 404 => {
+          logger.info("Requested user " + uuid + " not found!")
+          None
         }
+        case _ => throw UserDAONetworkException(response.json)
       })
-      case _ => Future.successful(None) // Todo: PUT and DELETE!
+      case _ => throw UserDAOHTTPMethodException(restMethod)
     }
   }
 
@@ -46,5 +50,20 @@ class UserDropsDAO @Inject() (ws: WSClient, conf : Configuration) extends UserDA
     User(
       uuid = (json \ "id").as[UUID],
       email = (json \\ "email").map(_.as[String]).toSet
+    )
+}
+
+case class UserDAOHTTPMethodException(method: String, cause: Throwable = null) extends
+  Exception("HTTP method " + method + " is not supported.", cause)
+
+case class UserDAONetworkException(status: Int, typ: String, msg: String, cause: Throwable = null) extends
+  Exception(msg, cause)
+
+object UserDAONetworkException {
+  def apply(dropsResponse: JsValue) : UserDAONetworkException =
+    UserDAONetworkException(
+      status = (dropsResponse \ "code").as[Int],
+      typ = (dropsResponse \ "type").as[String],
+      msg = (dropsResponse \ "msg").as[String]
     )
 }

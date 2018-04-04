@@ -16,3 +16,6 @@ silhouette.error.AuthenticatorDiscardingException=An error occured while trying 
 silhouette.error.CryptoException=Magical crypto cyber error occured! We can not establish a secure connection.
 
 silhouette.error.could.not.authenticate=I'm sorry! We have trouble to establish a secured connection. Thus, you can not access the requested page.
+
+drops.dao.error.network=An error occured on communication between different components of the pool.
+drops.dao.error.method=The communication between components of the system was implemented incorrectly.

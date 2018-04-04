@@ -1,4 +1,4 @@
-package mariadb
+package daos.mariadb
 
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
