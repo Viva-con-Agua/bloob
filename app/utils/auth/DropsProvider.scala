@@ -42,10 +42,10 @@ trait BaseDropsProvider extends OAuth2Provider {
   override protected def buildProfile(authInfo: OAuth2Info): Future[Profile] = {
     httpLayer.url(urls("api").format(authInfo.accessToken)).get().flatMap { response =>
       val json = response.json
-      (json \ "meta" \ "code").asOpt[Int] match {
+      (json \ "code").asOpt[Int] match {
         case Some(code) if code != 200 =>
-          val errorType = (json \ "meta" \ "error_type").asOpt[String]
-          val errorMsg = (json \ "meta" \ "error_message").asOpt[String]
+          val errorType = (json \ "type").asOpt[String]
+          val errorMsg = (json \ "msg").asOpt[String]
 
           throw new ProfileRetrievalException(SpecifiedProfileError.format(id, code, errorType, errorMsg))
         case _ => profileParser.parse(json, authInfo)
@@ -150,5 +150,5 @@ object DropsProvider {
     * The Drops constants.
     */
   val ID = "drops" // TODO: Read from config!
-  val API = "https://pool.vivaconagua.org/drops/oauth2/rest/profile?access_token=%s" // TODO: Change and read from config!
+  val API = "https://pool.vivaconagua.org/drops/oauth2/rest/profile?access_token=%s"
 }
