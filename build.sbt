@@ -45,6 +45,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-silhouette-persistence" % silhouetteVersion
 )
 libraryDependencies += "com.iheart" %% "ficus" % "1.4.3"
+libraryDependencies += "com.github.tyagihas" % "scala_nats_2.11" % "0.3.0"
 // The Play project itself
 lazy val root = (project in file("."))
   .enablePlugins(Common, PlayScala, GatlingPlugin)
