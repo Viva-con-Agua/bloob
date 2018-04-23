@@ -33,7 +33,6 @@ trait AuthOES {
 class AuthOESImpl @Inject() (@Named("auth-oes-actor") authOESActor: ActorRef, conf : Configuration, lifecycle: ApplicationLifecycle) extends AuthOES {
 
   val logger: Logger = Logger(this.getClass())
-  logger.debug("Init Auth OES Module")
 
   val nats : OESConnection = new OESConnection(authOESActor, conf)
 
@@ -63,10 +62,8 @@ class OESConnection(authOESActor: ActorRef, conf : Configuration) {
   // create a connection
   private val natsConn : Option[Conn] = init(authOESActor)
 
-  logger.debug("Instanciate OES connection!")
 
   private def init(authOESActor: ActorRef) = {
-    logger.debug("Nats server: " + server)
     val connection = Conn.connect(this.opts)
     // subscribes the LOGOUT event. The handler parses the body as UUID and sends an AuthLogout event containing the UUID.
     connection.subscribe("LOGOUT", (msg: Msg) =>
@@ -140,21 +137,18 @@ class AuthOESHandler @Inject() (conf : Configuration) extends Actor with Timers 
     */
   def receive = {
     case AuthLogout(id : UUID) => {
-      logger.debug("Received a logged out user: " + id)
       // add user id to list of logged out users
-      loggedOutUserIds :+ id
+      this.loggedOutUserIds = this.loggedOutUserIds :+ id
 
       // assume a logout after x milliseconds
       timers.startSingleTimer(ReleaseTimerKey(id), ReleaseLogout(id), Duration(sessionTimeout, MILLISECONDS))
     }
     case ReleaseLogout(id : UUID) => {
-      loggedOutUserIds = loggedOutUserIds.filter(_ != id)
+      this.loggedOutUserIds = this.loggedOutUserIds.filter(_ != id)
     }
     case IsLoggedOut(user: User) => {
-      logger.debug("List of logged out users: " + loggedOutUserIds.mkString(", "))
-      logger.debug("Requested user is logged out? " + loggedOutUserIds.contains(user.uuid))
       // answer the question if the given user is logged out
-      sender() ! loggedOutUserIds.contains(user.uuid)
+      sender() ! this.loggedOutUserIds.contains(user.uuid)
     }
   }
 }
