@@ -14,6 +14,7 @@ def gatlingVersion(scalaBinVer: String): String = scalaBinVer match {
 
 resolvers += "Atlassian Releases" at "https://maven.atlassian.com/public/"
 resolvers += "MVN Repository" at "https://mvnrepository.com/artifact/"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 libraryDependencies += ws
 libraryDependencies += guice
@@ -38,14 +39,9 @@ libraryDependencies += "org.jsoup" % "jsoup" % "1.11.2"
 libraryDependencies += "com.atlassian.jwt" % "jwt-core" % "1.6.1"
 libraryDependencies += "com.atlassian.jwt" % "jwt-api" % "1.6.1"
 
-libraryDependencies ++= Seq(
-  "com.mohiva" %% "play-silhouette" % silhouetteVersion,
-  "com.mohiva" %% "play-silhouette-password-bcrypt" % silhouetteVersion,
-  "com.mohiva" %% "play-silhouette-crypto-jca" % silhouetteVersion,
-  "com.mohiva" %% "play-silhouette-persistence" % silhouetteVersion
-)
 libraryDependencies += "com.iheart" %% "ficus" % "1.4.3"
-libraryDependencies += "com.github.tyagihas" % "scala_nats_2.11" % "0.3.0"
+
+libraryDependencies += "org.vivaconagua" %% "play2-oauth-client" % "0.2.0-SNAPSHOT"
 // The Play project itself
 lazy val root = (project in file("."))
   .enablePlugins(Common, PlayScala, GatlingPlugin)

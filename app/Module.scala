@@ -17,6 +17,5 @@ class Module(environment: Environment, configuration: Configuration)
 
   override def configure() = {
     bind[MailDAO].to[mariadb.MailDAOImpl].in[Singleton]
-    bind[UserDAO].to[drops.UserDropsDAO].in[Singleton]
   }
 }

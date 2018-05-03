@@ -4,9 +4,8 @@ import javax.inject.Inject
 
 import play.api.mvc._
 import com.mohiva.play.silhouette.api.Silhouette
-//import com.mohiva.play.silhouette.api.actions.SecuredAction
-import utils.auth.CookieEnv
-import utils.UserService
+import org.vivaconagua.play2OauthClient.silhouette.CookieEnv
+import org.vivaconagua.play2OauthClient.silhouette.UserService
 
 import daos.MailDAO
 import models.Mail
