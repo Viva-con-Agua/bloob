@@ -2,16 +2,24 @@ import sbt.Keys._
 
 lazy val GatlingTest = config("gatling") extend Test
 
-scalaVersion in ThisBuild := "2.12.4"
+scalaVersion in ThisBuild := "2.12.5"
 
-crossScalaVersions := Seq("2.11.12", "2.12.4")
+crossScalaVersions := Seq("2.11.12", "2.12.5")
+val silhouetteVersion = "5.0.2"
 
 def gatlingVersion(scalaBinVer: String): String = scalaBinVer match {
   case "2.11" => "2.2.5"
   case "2.12" => "2.3.0"
 }
 
+resolvers += "Atlassian Releases" at "https://maven.atlassian.com/public/"
+resolvers += "MVN Repository" at "https://mvnrepository.com/artifact/"
+//resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+
+libraryDependencies += ws
 libraryDependencies += guice
+libraryDependencies += ehcache
 libraryDependencies += "org.joda" % "joda-convert" % "1.9.2"
 libraryDependencies += "net.logstash.logback" % "logstash-logback-encoder" % "4.11"
 
@@ -29,7 +37,12 @@ libraryDependencies ++= Seq(
 libraryDependencies += "com.typesafe.play" %% "play-mailer" % "6.0.1"
 libraryDependencies += "com.typesafe.play" %% "play-mailer-guice" % "6.0.1"
 libraryDependencies += "org.jsoup" % "jsoup" % "1.11.2"
+libraryDependencies += "com.atlassian.jwt" % "jwt-core" % "1.6.1"
+libraryDependencies += "com.atlassian.jwt" % "jwt-api" % "1.6.1"
 
+libraryDependencies += "com.iheart" %% "ficus" % "1.4.3"
+
+libraryDependencies += "org.vivaconagua" %% "play2-oauth-client" % "0.2.0"
 // The Play project itself
 lazy val root = (project in file("."))
   .enablePlugins(Common, PlayScala, GatlingPlugin)

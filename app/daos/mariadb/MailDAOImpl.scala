@@ -1,4 +1,4 @@
-package mariadb
+package daos.mariadb
 
 import javax.inject.{Inject, Singleton}
 

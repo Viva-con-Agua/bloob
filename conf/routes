@@ -1,5 +1,9 @@
 GET        /                       controllers.HomeController.index
 GET        /dao                    controllers.HomeController.daoTest
+GET        /user/test              controllers.HomeController.userTest
+
+GET        /authenticate/:provider controllers.DropsController.authenticate(provider, route: Option[String])
+POST       /authenticate/:provider controllers.DropsController.authenticate(provider, route: Option[String] = None)
 
 GET        /rest/v1/mail           v1.mails.MailsController.index
 POST       /rest/v1/mail           v1.mails.MailsController.create
