@@ -42,7 +42,7 @@ libraryDependencies += "com.atlassian.jwt" % "jwt-api" % "1.6.1"
 
 libraryDependencies += "com.iheart" %% "ficus" % "1.4.3"
 
-libraryDependencies += "org.vivaconagua" %% "play2-oauth-client" % "0.2.0"
+libraryDependencies += "org.vivaconagua" %% "play2-oauth-client" % "0.3.0"
 // The Play project itself
 lazy val root = (project in file("."))
   .enablePlugins(Common, PlayScala, GatlingPlugin)
